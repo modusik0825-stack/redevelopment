@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>재개발 위클리 (시안 D)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<!-- 시안용: 이번 주 실제 대화에서 뽑은 구역별 관련 대화 -->
+<script src="시안_구역대화.js"></script>
+<style>
+:root{
+  --bg:#ffffff;
+  --ink:#111111;
+  --body:#555555;
+  --muted:#999999;
+  --line:#e9e9e9;
+  --block:#eeeeee;
+  --dot:#ff6b2c;      /* 새 소식 표시용 주황 점 */
+  --up:#e5483d;
+  --down:#3b6fe0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#f4f4f4;color:var(--ink);font:16px/1.65 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+/* 항상 모바일 화면 */
+.app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg)}
+.wrap{padding:0 20px}
+a{color:inherit;text-decoration:none}
+
+.proto{font-size:11px;color:var(--muted);text-align:center;padding:6px;border-bottom:1px solid var(--line)}
+
+/* 헤더 */
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.mast{display:grid;grid-template-columns:32px 1fr 32px;align-items:center;height:58px}
+.logo{text-align:center;font-weight:900;font-size:22px;letter-spacing:-.05em;color:var(--ink)}
+.icon{width:32px;height:32px;display:grid;place-items:center;color:var(--ink);cursor:pointer}
+.icon svg{width:21px;height:21px}
+.tabs{display:flex;gap:22px;overflow-x:auto;scrollbar-width:none;padding:0 20px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{flex:none;font-size:16px;font-weight:600;padding:8px 0 12px;position:relative;color:var(--ink)}
+.tabs a.on{box-shadow:inset 0 -2px 0 var(--ink)}
+.dot::after{content:"";position:absolute;top:6px;right:-7px;width:5px;height:5px;border-radius:50%;background:var(--dot)}
+
+/* 주차 배너 */
+.banner{background:var(--block);margin:16px 0 0;border-radius:6px;padding:12px 16px}
+.banner h1{font-size:17px !important}
+.banner p{margin-top:2px !important;font-size:13px !important;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.banner .live{margin-top:0 !important;font-size:12px !important}
+.banner .wk{display:flex;align-items:center;justify-content:space-between}
+.banner h1{font-size:24px;font-weight:700;margin:0;letter-spacing:-.04em}
+.banner p{margin:6px 0 0;font-size:15px;color:var(--body)}
+.arrows{display:flex;gap:6px}
+.arrows button{width:34px;height:34px;border-radius:50%;border:1px solid #d6d6d6;background:var(--bg);font-size:17px;cursor:pointer;color:var(--ink);display:grid;place-items:center;padding:0}
+.arrows button:disabled{color:#cccccc;cursor:default}
+.live{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--body);margin-top:10px}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--dot)}
+
+/* 이번 주 한 줄 */
+.headline{padding:26px 0 6px}
+.headline h2{font-size:20px;font-weight:700;line-height:1.45;margin:0 0 6px;letter-spacing:-.03em}
+.headline p{margin:0;color:var(--body);font-size:15px}
+.why{list-style:none;padding:0;margin:14px 0 0;border-top:1px solid var(--line)}
+.why li{padding:11px 0;border-bottom:1px solid var(--line);font-size:15px;color:var(--body);display:grid;grid-template-columns:76px 1fr;gap:8px}
+.why li b{color:var(--ink);font-weight:700;font-size:14px}
+.more{display:inline-block;margin-top:12px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);background:none;border:0;padding:0;cursor:pointer}
+
+/* 섹션 */
+section{padding:34px 0 6px;scroll-margin-top:110px}
+.sh{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:4px}
+.sh h2{font-size:21px;font-weight:800;margin:0;letter-spacing:-.04em}
+.sh small{font-size:13px;color:var(--muted)}
+.meta{font-size:13px;color:var(--muted);margin-top:8px}
+.meta b{color:var(--ink);font-weight:600;margin-right:6px}
+
+/* 이슈 리스트 (기사 카드처럼) */
+.post{padding:20px 0;border-bottom:1px solid var(--line)}
+.post h3{font-size:18px;font-weight:700;line-height:1.45;margin:0 0 6px;letter-spacing:-.03em}
+.post p{margin:0;font-size:15px;color:var(--body);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.post .cnt{font-weight:600}
+.up{color:var(--up)} .down{color:var(--down)}
+.post details summary{list-style:none;cursor:pointer;font-size:13px;color:var(--muted);margin-top:8px}
+.post details summary::-webkit-details-marker{display:none}
+.post details[open] summary{display:none}
+.say{font-size:14px;color:var(--body);background:#f7f7f7;border-radius:6px;padding:10px 12px;margin-top:8px}
+.say b{color:var(--ink);font-weight:600}
+.say span{color:var(--muted);font-size:12px}
+
+/* 이슈 슬라이드 */
+.slider{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:16px -20px 0;padding:0 20px 4px;scrollbar-width:none;scroll-padding:0 20px}
+.slider::-webkit-scrollbar{display:none}
+.card{flex:0 0 82%;scroll-snap-align:start;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid #dddddd;border-radius:10px;padding:18px 16px 16px;cursor:pointer;display:flex;flex-direction:column;min-height:210px}
+.card:hover{border-color:var(--ink)}
+.card .cat{font-size:13px;font-weight:600;color:var(--body)}
+.card h3{font-size:18px;font-weight:700;line-height:1.42;margin:10px 0 8px;letter-spacing:-.03em}
+.card p{margin:0;font-size:14px;color:var(--body);flex:1}
+.card .foot{font-size:13px;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.card .foot em{font-style:normal}
+.card .foot em.up{color:var(--up)} .card .foot em.down{color:var(--down)}
+.zcard{flex-basis:66%;min-height:0}
+.zhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.zhead b{font-size:18px;font-weight:800;letter-spacing:-.03em}
+.zx{font-size:12px;font-weight:600;color:var(--up)}
+.zx.new{color:var(--dot)}
+.zcard p{margin-top:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.basis{font-size:12px;color:var(--muted);margin:10px 0 0}
+.seg{display:flex;gap:6px;margin:14px 0 2px}
+.seg button{font:inherit;font-size:14px;font-weight:600;border:1px solid #dcdcdc;background:var(--bg);color:var(--body);border-radius:999px;padding:5px 14px;cursor:pointer}
+.seg button em{font-style:normal;color:var(--muted);font-weight:500;margin-left:3px}
+.seg button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.seg button.on em{color:#cfcfcf}
+.wk-tag{font-size:12px;font-weight:600;color:var(--dot);margin-left:6px;vertical-align:2px}
+.subsmall{font-size:12px;font-weight:400;color:var(--muted);margin-left:6px}
+.hist{border-top:1px solid var(--line)}
+.hist .h{display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line)}
+.hist .hz{font-weight:700;font-size:16px}
+.hist .hd{font-size:13px;color:var(--muted)}
+.hist .hd em{font-style:normal;color:var(--dot);font-weight:600;margin-left:6px}
+.rose-stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 4px}
+.rose-stat div{background:var(--block);border-radius:6px;padding:12px 10px;text-align:center}
+.rose-stat b{display:block;font-size:20px;font-weight:800}
+.rose-stat span{font-size:12px;color:var(--body)}
+.rose-why{margin-top:14px}
+.sub-more{color:var(--muted);font-weight:500;margin-top:6px}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:14px}
+.dots i{width:6px;height:6px;border-radius:50%;background:#d6d6d6}
+.dots i.on{background:var(--ink);width:16px;border-radius:3px}
+
+/* 관련 대화 시트 */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+.sheet{position:fixed;left:50%;bottom:0;width:100%;max-width:430px;max-height:82vh;background:var(--bg);border-radius:16px 16px 0 0;transform:translate(-50%,100%);transition:transform .25s ease;z-index:21;display:flex;flex-direction:column}
+.sheet.open{transform:translate(-50%,0)}
+.sheet-bg.open{opacity:1;pointer-events:auto}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:#d6d6d6;margin:10px auto 0}
+.sheet .sh-head{padding:14px 20px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.sheet .sh-head .cat{font-size:13px;color:var(--body);font-weight:600}
+.sheet .sh-head h3{margin:4px 0 0;font-size:18px;line-height:1.4;letter-spacing:-.03em}
+.sheet .x{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--muted);padding:4px}
+.sheet .sh-body{overflow-y:auto;padding:8px 20px 28px}
+.chat{padding:12px 0;border-bottom:1px solid var(--line)}
+.chat .who{font-size:13px;color:var(--muted)}
+.chat .who b{color:var(--ink);font-weight:600;margin-right:6px}
+.chat .who .rt{font-size:11px;font-weight:600;background:var(--block);color:var(--ink);border-radius:4px;padding:0 5px;margin-right:6px}
+.chat p{margin:4px 0 0;font-size:15px;color:#333}
+.sheet .count{font-size:13px;color:var(--muted);padding:12px 0 2px}
+.chat.ctx{padding-left:14px;border-left:2px solid var(--line);margin-left:2px}
+.chat.ctx p{color:var(--body);font-size:14px}
+.chat .lbl{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px;margin-left:6px}
+.chat mark{box-shadow:inset 0 -6px 0 #ffe3d4}
+
+.sub{font-size:16px;font-weight:700;margin:28px 0 4px}
+.zchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.zchips span{border:1px solid #dcdcdc;border-radius:999px;padding:5px 12px;font-size:14px;cursor:pointer}
+.zchips span b{font-weight:700}
+.zchips span em{font-style:normal;color:var(--muted);font-size:12px;margin-left:3px}
+
+.link{padding:14px 0;border-bottom:1px solid var(--line)}
+.link .t{font-size:15px;font-weight:600;line-height:1.5}
+
+/* 추천 순위 */
+.r{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:15px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.r .no{font-size:18px;font-weight:800;text-align:center}
+.r .zn{font-size:17px;font-weight:700;position:relative}
+.r .zn.dot::after{top:2px;right:-8px}
+.r .m{display:block;font-size:13px;color:var(--muted)}
+.r .mv{font-size:13px;font-weight:600;text-align:right;min-width:48px;color:var(--muted)}
+.r .mv.new{color:var(--dot)}
+.r .mv.up{color:var(--up)} .r .mv.down{color:var(--down)}
+.r .rt{font-size:12px;font-weight:600;color:var(--ink);background:var(--block);border-radius:4px;padding:1px 6px;margin-left:10px;vertical-align:2px}
+.r:hover .zn{text-decoration:underline}
+
+/* 리트리 */
+.pick{padding:20px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.pick h3{font-size:18px;font-weight:700;margin:0 0 6px;letter-spacing:-.03em}
+.pick p{margin:0;font-size:15px;color:var(--body)}
+.ghost{opacity:.45}
+.none{background:var(--block);border-radius:6px;padding:16px;margin:16px 0 4px;font-size:15px;color:var(--body);text-align:center}
+
+mark{background:none;color:var(--ink);font-weight:700;box-shadow:inset 0 -6px 0 #ffe3d4}
+
+.demo{font-size:12px;color:var(--muted);margin:12px 0 0;display:flex;gap:6px;align-items:center}
+.demo button{font:inherit;font-size:12px;border:1px solid var(--line);border-radius:999px;background:var(--bg);padding:2px 10px;cursor:pointer;color:var(--muted)}
+.demo button.on{border-color:var(--ink);color:var(--ink)}
+
+footer{border-top:1px solid var(--line);margin-top:40px;padding:24px 20px 50px;font-size:13px;color:var(--muted);line-height:1.8}
+footer b{display:block;color:var(--ink);font-size:16px;font-weight:900;letter-spacing:-.04em;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="proto">디자인 시안 D · 숫자와 발언은 예시예요</div>
+
+<header>
+  <div class="wrap mast">
+    <span></span>
+    <div class="logo">재개발 위클리</div>
+    <div class="icon" title="구역 검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></div>
+  </div>
+  <nav class="tabs">
+    <a href="#issue" class="on">주요 이슈</a>
+    <a href="#pick" class="dot">추천 구역</a>
+    <a href="#retree" class="dot">리트리 픽</a>
+    <a href="#rose" class="dot">장미마을</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div class="banner">
+    <h1>11월 3주차 기준</h1>
+    <p>11.16 – 11.22 · 대화 4,812개 <span class="live"><i></i>업데이트 중</span></p>
+  </div>
+
+  <div class="headline">
+    <h2>이번 주 톡방, 신림1 얘기가 제일 많았어요 👀</h2>
+    <p>“아파트를 빨리 받고 싶다면 어디?”라는 질문에 신림1이 여러 번 답으로 나왔어요.</p>
+    <ul class="why">
+      <li><b>빠른 입주</b> “아파트를 빨리 받고 싶다면 신림1도 괜찮다”는 추천이 여러 사람에게서 나왔어요.</li>
+      <li><b>매수 시점</b> 내년 관리처분 이후에 사도 될지 묻는 질문이 나왔어요.</li>
+      <li><b>주의할 점</b> 무허가 건물이 많아서 처음 투자하는 사람은 매물 고르기가 어려울 수 있다는 의견도 있었어요.</li>
+    </ul>
+    <button class="more" id="moreZone">신림1 추천 근거 전체 보기 ›</button>
+  </div>
+
+  <!-- 주요 이슈 -->
+  <section id="issue">
+    <div class="sh"><h2>주요 언급 이슈</h2><small>지난주 대비</small></div>
+
+    <div class="slider" id="slider">
+      <button class="card" data-zone="사당21">
+        <span class="cat">🚫 구역 소식</span>
+        <h3>사당21, 구역 취소 소식에 술렁</h3>
+        <p>추진위가 밀어붙였지만 반대가 거셌다는 얘기와 함께, 취소가 확정인지 추진위원장에게 직접 물어봤다는 소유주 글도 올라왔어요.</p>
+        <span class="foot"><span class="ppl"></span>명이 얘기했어요 · <em class="up">이번 주 새로 나온 이슈</em></span>
+      </button>
+      <button class="card" data-i="0">
+        <span class="cat">📈 시세·거래</span>
+        <h3>호가가 한 주 만에 확 올랐다는 얘기가 많아요</h3>
+        <p>급매는 대부분 빠졌고, 남은 매물은 호가만 높다는 의견이 이어졌어요.</p>
+        <span class="foot">24명이 얘기했어요 · <em class="up">지난주보다 늘었어요</em></span>
+      </button>
+      <button class="card" data-i="1">
+        <span class="cat">🏗️ 사업 진행</span>
+        <h3>동호수 추첨, 언제 하는 건가요?</h3>
+        <p>보통 착공 후 추첨하고, 계약 일정은 조합마다 다르다는 설명이 나왔어요.</p>
+        <span class="foot">19명이 얘기했어요 · <em class="up">지난주보다 늘었어요</em></span>
+      </button>
+      <button class="card" data-i="2">
+        <span class="cat">📜 정책·규제</span>
+        <h3>연말에 규제가 한 번 더 올까?</h3>
+        <p>토허제·대출규제 추가 가능성을 두고 “지금은 지켜보는 중”이라는 반응이 많았어요.</p>
+        <span class="foot">11명이 얘기했어요 · <em>지난주와 비슷해요</em></span>
+      </button>
+      <button class="card" data-i="3">
+        <span class="cat">🏛️ 정비 제도</span>
+        <h3>세계유산 등재, 주변 구역엔 악재?</h3>
+        <p>한양도성 세계유산 등재 추진 소식에 높이 규제를 걱정하는 얘기가 나왔어요.</p>
+        <span class="foot">9명이 얘기했어요 · <em class="down">지난주보다 줄었어요</em></span>
+      </button>
+    </div>
+    <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+
+    <div class="sub">갑자기 많이 언급된 구역</div>
+    <div class="slider zslider">
+      <button class="card zcard" data-i="5">
+        <span class="zhead"><b>미아258</b><span class="zx">평소의 23배</span></span>
+        <p>조합설립 소식이 올라오면서 “진행이 정말 빠르다”는 반응이 이어졌어요 🏃</p>
+        <span class="foot">이번 주 7회 언급</span>
+      </button>
+      <button class="card zcard" data-i="6">
+        <span class="zhead"><b>구의46</b><span class="zx">평소의 20배</span></span>
+        <p>직접 다녀온 임장 후기가 올라왔어요. 추진위원장이 좋아서 잘될 것 같다는 평이 많았어요.</p>
+        <span class="foot">이번 주 6회 언급</span>
+      </button>
+      <button class="card zcard" data-i="7">
+        <span class="zhead"><b>자양4</b><span class="zx">평소의 5.7배</span></span>
+        <p>“P 20억, 40억 들고 산다”는 얘기에 가격이 너무 올랐다는 반응과 지금 팔아도 되나 고민하는 원주민 상담이 겹쳤어요.</p>
+        <span class="foot">이번 주 26회 언급</span>
+      </button>
+      <button class="card zcard" data-i="4">
+        <span class="zhead"><b>신림1</b><span class="zx">평소의 23배</span></span>
+        <p>“아파트를 빨리 받고 싶다면 어디?”라는 질문에 답으로 여러 번 나왔어요.</p>
+        <span class="foot">이번 주 7회 언급</span>
+      </button>
+    </div>
+    <p class="basis">* 평소 = 직전 4주 동안의 주당 평균 언급 수</p>
+  </section>
+
+  <!-- 추천 구역 -->
+  <section id="pick">
+    <div class="sh"><h2>주요 추천 구역</h2><small>추천한 사람 수 순</small></div>
+    <div class="r"><span class="no">1</span><span><span class="zn dot">신림1</span><span class="m">추천 3명 · 언급 7회</span></span><span class="mv new">NEW</span></div>
+    <div class="r"><span class="no">2</span><span><span class="zn">신길2</span><span class="m">추천 2명 · 언급 24회</span></span><span class="mv down">▼1</span></div>
+    <div class="r"><span class="no">3</span><span><span class="zn dot">자양4</span><span class="m">추천 2명 · 언급 26회</span></span><span class="mv new">NEW</span></div>
+    <div class="r"><span class="no">4</span><span><span class="zn dot">자양3</span><span class="m">추천 1명 · 언급 8회</span></span><span class="mv new">NEW</span></div>
+    <div class="r"><span class="no">5</span><span><span class="zn dot">한남5</span><span class="m">추천 1명 · 언급 2회</span></span><span class="mv new">NEW</span></div>
+    <p class="basis">* "추천·한 표·좋게 봅니다·지켜보시길"처럼 직접 권하는 말만 추천으로 세요. 질문이나 "취소·무산·비싸·ㅠ"가 섞인 말은 빼요.<br>* 부정적인 소식이 많은 구역은 순위에서 빼고 주요 이슈로 옮겨요 (이번 주: 사당21 구역 취소)</p>
+  </section>
+
+  <!-- 리트리 -->
+  <section id="retree">
+    <div class="sh"><h2>리트리 추천 구역</h2></div>
+    <div class="seg" id="rtSeg"><button class="on" data-p="rtWeek">이번 주 <em>2</em></button><button data-p="rtPast">지난 4주 <em>3</em></button></div>
+
+    <div id="rtWeek">
+    <div class="pick"><h3>여대신1·2, “제2의 장미마을” 👀</h3><p>“영등포에서 대기 중인 것 중 제2의 장미는 이제 여대신 시리즈임. 여대신1, 여대신2는 장미, 신길동 3922급 사업성 나오는 곳이라 잘 지켜보시길”</p><div class="meta"><b>리트리 픽</b>11.19 15:39</div></div>
+    <div class="pick"><h3>목동1단지, 갈아타기 매물로 추천</h3><p>“어제 올린 목동1단지 꿀매물입니다! 갈아타기 하실 분들은 관심 가져 보세요. 지금은 핵심지 재건축 갈아타기 좋은 시즌이라…”</p><div class="meta"><b>리트리 픽</b>11.20 13:27</div></div>
+
+    </div>
+
+    <div id="rtPast" hidden>
+      <p class="basis" style="margin:12px 0 4px">10.26 – 11.22 · 최근 순</p>
+      <div class="pick"><h3>목동1단지 <span class="wk-tag">이번 주</span></h3><p>“어제 올린 목동1단지 꿀매물입니다! 갈아타기 하실 분들은 관심 가져 보세요.”</p><div class="meta"><b>리트리 픽</b>11.20</div></div>
+      <div class="pick"><h3>여대신1·2 <span class="wk-tag">이번 주</span></h3><p>“영등포에서 대기 중인 것 중 제2의 장미는 이제 여대신 시리즈임.”</p><div class="meta"><b>리트리 픽</b>11.19</div></div>
+      <div class="pick"><h3>도림1</h3><p>“제가 도림1은 후배들한테도 많이 추천했는데 아무도 안 샀네여ㅠ”</p><div class="meta"><b>리트리 픽</b>11.12</div></div>
+    </div>
+
+    <div class="sub">리트리의 이번 주 한마디 💬</div>
+    <div class="post"><p>경부선 지하화는 무조건 할 수밖에 없는 사업이라고 예전부터 말씀드림. 사업성 나오는 유일한 노선이자 토지 이용 효율화 때문에 시간이 걸릴지언정 할 수밖에 없음. 철로로 공간이 단절된 곳들이 최대 수혜죠.</p><div class="meta">11.19 15:28 · 연속 발언 18개</div></div>
+    <div class="post"><p>사업성 향상을 위한 정비계획 변경은 흔한 일이에요. 예전처럼 몇 년 걸리는 것도 아니고 도로부지는 애초에 감평도 싸고, 무조건 이득인데 소통을 못 하는 게 실력 부족일지도… 논리로 설득을 못 하니 다 쳐내는 거죠.</p><div class="meta">11.16 22:45 · 연속 발언 8개</div></div>
+  </section>
+
+  <!-- 장미마을 -->
+  <section id="rose">
+    <div class="sh"><h2>장미마을 언급 🌹</h2><small>신길·도림 장미마을</small></div>
+    <div class="rose-stat">
+      <div><b>35회</b><span>이번 주 언급</span></div>
+      <div><b>55회</b><span>11월 전체</span></div>
+
+      <div><b>6회</b><span>지난주 언급</span></div>
+    </div>
+    <ul class="why rose-why">
+      <li><b>사업성</b> 리트리가 장미마을 사업성 분석글을 공유했고(11/16), 여대신1·2를 “제2의 장미”로 꼽으면서 장미가 사업성 비교 기준처럼 쓰였어요.</li>
+      <li><b>진행 소식</b> 신탁 방식으로 갈 수도 있다는 얘기(11/17)와 동의율이 높아졌는지 묻는 질문(11/20)이 나왔어요.</li>
+      <li><b>가격</b> “장미 9억 vs 용두7 8.2억” 질문에 장미를 고른 사람이 많았고, 펜트하우스 조합원분양가 110억 얘기에 놀라는 반응도 있었어요.</li>
+    </ul>
+    <button class="more" id="roseWeek">이번 주 장미마을 대화 전체 보기 ›</button><br>
+    <button class="more sub-more" id="roseAll">11월 대화 전체 보기 ›</button>
+    <p class="basis">* 잠실장미·하계장미·장미상가 이야기는 빼고 모았어요</p>
+  </section>
+</main>
+
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <div class="sh-head"><div><div class="cat" id="shCat"></div><h3 id="shTitle"></h3></div><button class="x" id="shClose" aria-label="닫기">×</button></div>
+  <div class="sh-body" id="shBody"></div>
+</div>
+
+<footer>
+  <b>재개발 위클리</b>
+  단톡방 대화에서 “구역명+번호”와 추천 표현을 자동으로 찾아 정리해요. 잘못 잡힌 구역이 있을 수 있으니 구역을 눌러 원문을 확인해 주세요.
+</footer>
+</div>
+
+<script>
+  // 이슈 슬라이드: 점 표시
+  const slider = document.getElementById('slider'), dots = [...document.querySelectorAll('#dots i')];
+  slider.addEventListener('scroll', () => {
+    const cards = [...slider.children]; const x = slider.scrollLeft;
+    let k = 0; cards.forEach((c, i) => { if (Math.abs(c.offsetLeft - slider.offsetLeft - 20 - x) < Math.abs(cards[k].offsetLeft - slider.offsetLeft - 20 - x)) k = i; });
+    dots.forEach((d, i) => d.classList.toggle('on', i === k));
+  }, { passive: true });
+
+  // 카드 → 관련 대화 시트 (시안용 예시 대화)
+  const CHATS = [
+    { cat: '📈 시세·거래', title: '호가가 한 주 만에 확 올랐다는 얘기가 많아요', msgs: [
+      ['가지', '11/19 21:04', '요즘 도당1-1 쪽 호가가 한 주 만에 확 올라왔어요. 매물도 거의 다 들어갔고요.'],
+      ['밍밍', '11/18 22:40', '급매는 이미 다 빠졌고 지금 남은 건 호가만 높은 물건들이라 조금 지켜보는 게 나을 듯요.'],
+      ['긁춘', '11/18 22:43', '자양4도 지난주랑 비교하면 확실히 올랐어요. 갭이 1억 넘게 벌어졌네요.'],
+      ['리트리', '11/20 13:46', '언제까지 나올지는 장담할 수 없죠. 그래서 적당한 매수시기에 매수해야 하는데, 최근 주식 하락으로 갈아타기가 어려워진 분들이 많이 계신 것 같네요.', 1],
+    ]},
+    { cat: '🏗️ 사업 진행', title: '동호수 추첨, 언제 하는 건가요?', msgs: [
+      ['리트리', '11/17 13:04', '동호수 추첨 이후 일반분양 전후로 해요. 조합마다 일정이 약간씩 달라요.', 1],
+      ['리트리', '11/17 13:05', '보통은 착공 후 동호수 추첨합니다.', 1],
+      ['리트리', '11/17 13:07', '일분 계약이랑 조합원 계약 일정은 조합 재량이에요.', 1],
+      ['리트리', '11/17 13:10', '사업성에 따라 다른데, 보통은 상대적으로 구린 걸 일분으로 밀고 조합원이 좋은 걸 가져가죠.', 1],
+    ]},
+    { cat: '📜 정책·규제', title: '연말에 규제가 한 번 더 올까?', msgs: [
+      ['근거', '11/16 11:12', '한 달 전만 해도 연말·연초에 토허, 대출규제 한 번 더 갈 거라 봤는데 지금은 저도 지켜보는 중이에요.'],
+      ['유승우', '11/16 11:20', '만안구, 구리, 용인 등이요.'],
+    ]},
+    { cat: '🏛️ 정비 제도', title: '세계유산 등재, 주변 구역엔 악재?', msgs: [
+      ['곤피', '11/19 10:52', '현재 국가유산청이 추진 중인 한양도성 세계유산 등재와 관련해 목소리를 내주십사 연락드립니다.'],
+      ['곤피', '11/19 10:53', '여기에 더하여 세계유산까지 등재될 경우, 서울 도심의 재개발·재건축은 영원히 타격을 받게 됩니다.'],
+    ]},
+    { cat: '📍 신림1', title: '신림1 추천 근거', msgs: [
+      ['신중', '11/17 21:33', '그냥 아싸리 아파트 빨리 받고 싶다 그러면 신림1도 괜찮아 보여요 저는'],
+      ['곤피', '11/17 21:34', '신림1.. 공부를,'],
+      ['조심히', '11/17 21:36', '저도 급하면 신림1 추천'],
+      ['(질문)', '11/17 23:15', '내년 관처 이후에 신림1은 어떠신가요.'],
+      ['두두', '11/17 23:17', '지금 매수하기엔 신림1은 무허가 많아서 현청매물 걸러내기 어려울 수도 있어서 아예 처음이면 안전하게 가는 것도 추천드립니다.'],
+      ['두두', '11/17 23:28', '모의투자다 생각하고 신림1도 뭐 가보시고 다른 데도 가보시고'],
+    ]},
+    { cat: '📍 미아258', title: '조합설립 소식에 “진행 빠르다”', msgs: [
+      ['유승우', '11/18 16:05', '미아258 조합설립'],
+      ['리치', '11/18 16:08', '우와 미아258 개빠르네요'],
+      ['유승우', '11/20 16:25', '미아258도 광풍오면 팔아야죠. Again2021'],
+      ['가지', '11/20 17:06', '갖고가는곳 미아 258'],
+    ]},
+    { cat: '📍 구의46', title: '임장 후기: 추진위원장이 좋다', msgs: [
+      ['두두', '11/18 23:39', '구의46 찍고왔네요'],
+      ['두두', '11/18 23:51', '구의46은 추진위사장님이 진짜 너무 좋긴하네요'],
+      ['두두', '11/18 23:53', '구의46은 잘될거같은데'],
+      ['밍밍', '11/20 09:23', 'ㄷㄷ 구의46'],
+    ]},
+    { cat: '📍 자양4', title: '“P 20억”, 너무 오른 걸까', msgs: [
+      ['(질문)', '11/18', '자양4a 원주민이에요. 50평대 다가구 주택이고요. 그런데 상속주택이라서 지분이 가족들과 나뉘어 있습니다.'],
+      ['간식먹는프렌즈', '11/18 14:16', '자양4a가 준상급지 취급받긴 한데 40억 있는 사람은 한남이나 성수로 갑니다.'],
+      ['축 죠르디', '11/18 14:36', '근데 지금이 어찌 보면 자양4A 뽐뿌가 제일 들어가 있는 시기 같기도 해요'],
+      ['긁춘', '11/18 14:38', '와 근데 자양4a 대단독들 p 20억...'],
+    ]},
+    { cat: '📍 도당1-1', title: '“좋은 픽”과 재당첨 제한 질문', msgs: [
+      ['두두', '11/14 23:45', '도당1-1 자세히 좀 알아봐야겠네요. 좋은 픽 감사합니다.'],
+      ['한숨 쉬는 죠르디', '11/15 00:20', '도당1-1은 비규제라서 재당첨 5년 제한 미적용인가요???'],
+      ['한숨 쉬는 죠르디', '11/16 13:00', '도당1-1은 비규제지역이라 재당첨 5년 해당 없지 않나요?'],
+    ]},
+  ];
+  const sheet = document.getElementById('sheet'), bg = document.getElementById('sheetBg');
+  const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const openSheet = i => {
+    const d = CHATS[i];
+    document.getElementById('shCat').textContent = d.cat;
+    document.getElementById('shTitle').textContent = d.title;
+    document.getElementById('shBody').innerHTML = `<div class="count">관련 대화 ${d.msgs.length}개 · 시간 순</div>` +
+      d.msgs.map(([who, t, x]) => `<div class="chat"><div class="who"><b>${esc(who)}</b>${t}</div><p>${esc(x)}</p></div>`).join('');
+    document.getElementById('shBody').scrollTop = 0;
+    sheet.classList.add('open'); bg.classList.add('open'); document.body.style.overflow = 'hidden';
+  };
+  const closeSheet = () => { sheet.classList.remove('open'); bg.classList.remove('open'); document.body.style.overflow = ''; };
+  document.querySelectorAll('.card[data-i]').forEach(c => c.onclick = () => openSheet(+c.dataset.i));
+  // 추천 구역 → 그 구역 관련 대화 전체 (구역 이름이 없어도 이어진 대화는 함께)
+  const openZone = z => {
+    const rows = (window.ZONE_CHATS || {})[z] || [];
+    const kw = rows.filter(r => r[3] === 'k').length, cx = rows.length - kw;
+    const m = /^(.+?)(\d.*)$/.exec(z);
+    const zre = z.startsWith('장미마을') ? /((?:신길\s?|도림\s?|영등포\s?)?장미(?:마을)?)/g : m ? new RegExp('(' + m[1] + '\\s?동?\\s?(?:제\\s?)?' + m[2].replace('-', '\\-') + '[aAbB]?(?:구역)?)', 'g') : null;
+    const isRose = z.startsWith('장미마을'), all = z.endsWith('_전체'), name = z.replace('_전체', '');
+    document.getElementById('shCat').textContent = isRose ? '🌹 장미마을' : '📍 추천 구역';
+    document.getElementById('shTitle').textContent = name + (all ? ' 11월 대화 전체' : ' 관련 대화');
+    document.getElementById('shBody').innerHTML =
+      `<div class="count">${all ? '11월' : '이번 주'} ${name} 언급 ${kw}개 · 이어진 대화 ${cx}개 · 시간 순</div>` +
+      (rows.length ? rows.map(([who, t, x, k]) => {
+        let tx = esc(x); if (zre && k === 'k') tx = tx.replace(zre, '<mark>$1</mark>');
+        return `<div class="chat ${k === 'c' ? 'ctx' : ''}"><div class="who"><b>${esc(who)}</b>${t.replace('-', '/')}${k === 'c' ? '<span class="lbl">이어진 대화</span>' : ''}</div><p>${tx.replace(/\n/g, '<br>')}</p></div>`;
+      }).join('') : '<div class="chat"><p>이번 주 관련 대화를 찾지 못했어요.</p></div>');
+    document.getElementById('shBody').scrollTop = 0;
+    sheet.classList.add('open'); bg.classList.add('open'); document.body.style.overflow = 'hidden';
+  };
+  document.querySelectorAll('.card[data-zone]').forEach(c => {
+    const rows = (window.ZONE_CHATS || {})[c.dataset.zone] || [];
+    c.querySelector('.ppl').textContent = new Set(rows.map(r => r[0])).size;
+    c.onclick = () => openZone(c.dataset.zone);
+  });
+  document.querySelectorAll('#pick .r').forEach(r => r.onclick = () => openZone(r.querySelector('.zn').textContent.trim()));
+  document.getElementById('moreZone').onclick = () => openZone('신림1');
+  bg.onclick = closeSheet; document.getElementById('shClose').onclick = closeSheet;
+  addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+  document.querySelectorAll('#rtSeg button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#rtSeg button').forEach(x => { x.classList.toggle('on', x === b); document.getElementById(x.dataset.p).hidden = x !== b; });
+  });
+  document.getElementById('roseWeek').onclick = () => openZone('장미마을');
+  document.getElementById('roseAll').onclick = () => openZone('장미마을_전체');
+  // 탭 하이라이트
+  const tabs = [...document.querySelectorAll('.tabs a')];
+  addEventListener('scroll', () => {
+    let cur = tabs[0];
+    for (const t of tabs) { const s = document.querySelector(t.getAttribute('href')); if (s.getBoundingClientRect().top < 140) cur = t; }
+    tabs.forEach(t => t.classList.toggle('on', t === cur));
+  }, { passive: true });
+</script>
+</body>
+</html>
