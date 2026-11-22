@@ -328,9 +328,15 @@ for ($i = (Get-LB $wS); $i -lt $ALLM.Count; $i++) {
   if ($cur -and ($m.t - $cur.last).TotalMinutes -le 5) { $cur.parts.Add($m.x); $cur.last = $m.t }
   else { $cur = [pscustomobject]@{ start = $m.t; last = $m.t; parts = (New-Object System.Collections.Generic.List[string]) }; $cur.parts.Add($m.x); $threads.Add($cur) }
 }
-$talk = @($threads | ForEach-Object { $txt = ($_.parts -join ' '); [pscustomobject]@{ t = $_.start; n = $_.parts.Count; text = $txt; len = ($txt -replace '[ㅋㅎㅠ^;.!?~\s]', '').Length } } |
+$talk = @($threads | ForEach-Object { $txt = ($_.parts -join ' '); [pscustomobject]@{ t = $_.start; n = $_.parts.Count; parts = $_.parts; text = $txt; len = ($txt -replace '[ㅋㅎㅠ^;.!?~\s]', '').Length } } |
   Where-Object { $_.len -ge 40 -and $RE_TALK.IsMatch($_.text) } | Sort-Object len -Descending | Select-Object -First 2 |
-  ForEach-Object { [ordered]@{ text = (Get-Snip $_.text 260); date = $_.t.ToString('MM.dd HH:mm'); count = $_.n } })
+  ForEach-Object {
+    # 메시지 하나하나를 줄(불렛)로: 짧은 맞장구(ㅋㅋ, 네네 등)는 빼고 최대 8줄
+    $lines = New-Object System.Collections.Generic.List[string]
+    foreach ($p in $_.parts) { $s = ($p -replace '\s+', ' ').Trim(); if (($s -replace '[ㅋㅎㅠ^;.!?~\s]', '').Length -lt 4) { continue }; $lines.Add((Get-Snip $s 140)) }
+    $more = [Math]::Max(0, $lines.Count - 8)
+    [ordered]@{ lines = @($lines | Select-Object -First 8); more = $more; date = $_.t.ToString('MM.dd HH:mm'); count = $_.n }
+  })
 
 # ───────────────────────── 9. 장미마을 ─────────────────────────
 $ROSE = [regex]'(?<![가-힣])(신길\s?|도림\s?|영등포\s?)?장미(마을)?'

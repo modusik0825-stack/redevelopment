@@ -66,6 +66,9 @@ section{padding:34px 0 6px;scroll-margin-top:110px}
 .empty{font-size:14px;color:var(--muted);padding:16px 0}
 .post{padding:20px 0;border-bottom:1px solid var(--line)}
 .post p{margin:0;font-size:15px;color:var(--body)}
+.talk{margin:0;padding-left:18px;font-size:15px;color:var(--body)}
+.talk li{margin:0 0 6px;padding-left:2px}
+.talk li::marker{color:var(--muted)}
 
 /* 슬라이드 카드 */
 .slider{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:16px -20px 0;padding:0 20px 4px;scrollbar-width:none;scroll-padding:0 20px}
@@ -261,7 +264,7 @@ footer b{display:block;color:var(--ink);font-size:16px;font-weight:900;letter-sp
     <div id="rtWeek">${W.retree.week.length ? W.retree.week.map(p => pickCard(p, false)).join('') : '<p class="empty">이번 주엔 리트리 추천이 없었어요. 지난 4주 탭에서 최근 추천을 볼 수 있어요.</p>'}</div>
     <div id="rtPast" hidden>${W.retree.past.length ? W.retree.past.map(p => pickCard(p, wkTitles.has(p.title))).join('') : '<p class="empty">지난 4주 동안 잡힌 추천이 없어요.</p>'}</div>
     <div class="sub">리트리의 이번 주 한마디 💬</div>
-    ${W.retree.talk.length ? W.retree.talk.map(t => `<div class="post"><p>${esc(t.text)}</p><div class="meta">${esc(t.date)} · 연속 발언 ${t.count}개</div></div>`).join('') : '<p class="empty">이번 주 리트리 발언이 없어요.</p>'}
+    ${W.retree.talk.length ? W.retree.talk.map(t => `<div class="post"><ul class="talk">${(t.lines || [t.text]).map(l => `<li>${esc(l)}</li>`).join('')}</ul>${t.more ? `<div class="meta">…외 ${t.more}개</div>` : ''}<div class="meta">${esc(t.date)} · 연속 발언 ${t.count}개</div></div>`).join('') : '<p class="empty">이번 주 리트리 발언이 없어요.</p>'}
   </section>`;
 
   // 장미마을
