@@ -237,7 +237,8 @@ Write-Host ("추천 구역 {0}곳, 부정 소식 구역 {1}곳" -f $picks.Count,
 
 # ───────────────────────── 7. 주요 언급 이슈 ─────────────────────────
 $topics = @(
-  @{ key = '시세'; emoji = '📈'; name = '시세·거래'; re = [regex]'신고가|호가|급매|매물|거래량|실거래|시세|하락|상승|폭등|급등|조정장|매수세|매도세|프리미엄|피가' },
+  @{ key = '시세'; emoji = '📈'; name = '시세·거래'; re = [regex]'신고가|호가|급매|매물|거래량|실거래|시세|상승|폭등|급등|매수세|프리미엄|피가' },
+  @{ key = '하락'; emoji = '📉'; name = '하락장 우려'; re = [regex]'하락장|하락기|하락세|하락할|하락하|폭락|급락|조정장|조정이|조정받|약세|침체|거품|버블|고점|꼭지|물렸|물린|손절|무너지|무너졌|빠지(고|는|네|면|겠)|빠졌|떨어지(고|는|네|면|겠)|떨어졌|하방|공포|역전세|미분양' },
   @{ key = '사업'; emoji = '🏗️'; name = '사업 진행'; re = [regex]'조합설립|조설|추진위|사업시행|사시|관리처분|관처|감정평가|감평|이주|철거|착공|일반분양|일분|동호수|비례율|분담금|시공사|총회|입찰|조합장' },
   @{ key = '정책'; emoji = '📜'; name = '정책·규제'; re = [regex]'토허|토지거래허가|대책|규제|DSR|LTV|대출|스트레스|조정대상|투기과열|실거주\s?의무|양도세|취득세|보유세|종부세|재초환|초과이익|지위양도|전매제한|금리' },
   @{ key = '제도'; emoji = '🏛️'; name = '정비 제도'; re = [regex]'신속통합|신통|모아타운|모아주택|공공재개발|도심공공|정비계획|용적률|기부채납|사업성\s?보정|특례|역세권|정비구역\s?지정|구역지정|후보지|공모|지하화' }
@@ -331,11 +332,18 @@ for ($i = (Get-LB $wS); $i -lt $ALLM.Count; $i++) {
 $talk = @($threads | ForEach-Object { $txt = ($_.parts -join ' '); [pscustomobject]@{ t = $_.start; n = $_.parts.Count; parts = $_.parts; text = $txt; len = ($txt -replace '[ㅋㅎㅠ^;.!?~\s]', '').Length } } |
   Where-Object { $_.len -ge 40 -and $RE_TALK.IsMatch($_.text) } | Sort-Object len -Descending | Select-Object -First 2 |
   ForEach-Object {
-    # 메시지 하나하나를 줄(불렛)로: 짧은 맞장구(ㅋㅋ, 네네 등)는 빼고 최대 8줄
-    $lines = New-Object System.Collections.Generic.List[string]
-    foreach ($p in $_.parts) { $s = ($p -replace '\s+', ' ').Trim(); if (($s -replace '[ㅋㅎㅠ^;.!?~\s]', '').Length -lt 4) { continue }; $lines.Add((Get-Snip $s 140)) }
-    $more = [Math]::Max(0, $lines.Count - 8)
-    [ordered]@{ lines = @($lines | Select-Object -First 8); more = $more; date = $_.t.ToString('MM.dd HH:mm'); count = $_.n }
+    # 이어지는 문장끼리 한 불렛으로 묶기: "~이자, ~때문에, ~해서"처럼 문장이 덜 끝난 메시지는 다음 메시지와 합침
+    $lines = New-Object System.Collections.Generic.List[string]; $buf = ''
+    foreach ($p in $_.parts) {
+      $s = ($p -replace '\s+', ' ').Trim()
+      if (($s -replace '[ㅋㅎㅠ^;.!?~\s]', '').Length -lt 2) { continue }
+      $buf = if ($buf) { $buf + ' ' + $s } else { $s }
+      $open = $s -match '(,|이자|때문에|지만|는데|은데|인데|해서|어서|라서|이라|으로|에서|하고|이고|면서|거나|든지|및|와|과|랑|고|며|면|니|서|\.\.)$' -or ($s -replace '[ㅋㅎㅠ^;.!?~\s]', '').Length -lt 8
+      if (-not $open) { $lines.Add((Get-Snip $buf 200)); $buf = '' }
+    }
+    if ($buf) { $lines.Add((Get-Snip $buf 200)) }
+    $more = [Math]::Max(0, $lines.Count - 6)
+    [ordered]@{ lines = @($lines | Select-Object -First 6); more = $more; date = $_.t.ToString('MM.dd HH:mm'); count = $_.n }
   })
 
 # ───────────────────────── 9. 장미마을 ─────────────────────────
